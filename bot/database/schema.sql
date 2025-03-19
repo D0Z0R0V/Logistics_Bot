@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS channels (
+    id INTEGER PRIMARY KEY,
+    names VARCHAR(100) NOT NULL,
+    link TEXT NOT NULL
+);
