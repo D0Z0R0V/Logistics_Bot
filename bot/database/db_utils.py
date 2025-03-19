@@ -9,3 +9,6 @@ async def get_connect():
         host=DB_CONFIG["dbhost"],
         port=DB_CONFIG["dbport"]
     )
+    
+async def save_post(post_text: str, time_start: str, time_end: str, channels: list):
+    pass
