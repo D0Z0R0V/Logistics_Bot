@@ -12,8 +12,12 @@ idna==3.10
 magic-filter==1.0.12
 multidict==6.2.0
 propcache==0.3.0
+pyaes==1.6.1
+pyasn1==0.6.1
 pydantic==2.10.6
 pydantic_core==2.27.2
 python-dotenv==1.0.1
+rsa==4.9
+Telethon==1.39.0
 typing_extensions==4.12.2
 yarl==1.18.3

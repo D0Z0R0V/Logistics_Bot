@@ -4,6 +4,10 @@ from aiogram.types import Message
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
+from bot.database.db_utils import save_post
+from monitor import monitoring
+import asyncio
+
 
 router = Router()
 
@@ -53,5 +57,8 @@ async def get_time(message: Message, state: FSMContext):
     
     await save_post(user_data["post_text"], time_start.strip(), time_end.strip(), user_data['channels'])
     await message.answer("Данные сохранены! Бот начнет мониторинг в указанное время.")
+    
+    asyncio.create_task(monitoring())
+    
     await state.clear()
     

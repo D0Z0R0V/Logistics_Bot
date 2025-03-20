@@ -11,3 +11,6 @@ DB_CONFIG = {
     "dbhost": os.getenv("DB_HOST"),
     "dbport": os.getenv("DB_PORT")
 }
+
+API_ID = os.getenv("API_ID")
+API_HASH = os.getenv("API_HASH")
