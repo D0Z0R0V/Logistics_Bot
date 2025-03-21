@@ -6,7 +6,7 @@ import asyncio, os, logging
 from dotenv import load_dotenv
 from config.config import BOT_TOKEN
 from bot.database.db import init_db
-from bot.handlers import menu
+from bot.handlers import menu, postlist
 
 
 load_dotenv()
@@ -18,6 +18,7 @@ async def main():
     
     dp.include_routers(
         menu.router,
+        postlist.router,
     )
     
     try:

@@ -5,7 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
 from bot.database.db_utils import save_post
-from monitor import monitoring
+from bot.handlers.monitor import monitoring
 import asyncio
 
 
@@ -21,7 +21,7 @@ class AddCheck(StatesGroup):
 async def get_posts(message: Message, state: FSMContext):
     await message.answer("Отправьте список каналов (каждый канал с новой строчки), где название - это ссылка на канал")
     await state.set_state(AddCheck.CHANNELS)
-    
+'''
 @router.message(AddCheck.CHANNELS)
 async def process_channel(message: Message, state: FSMContext):
     channels = message.text.strip().split("\n")
@@ -37,7 +37,17 @@ async def process_channel(message: Message, state: FSMContext):
         
     await state.update_data(channels=channel_data)
     await message.answer("Теперь отправьте полный текст поста.")
+    await state.set_state(AddCheck.POST_TEXT)'''
+    
+@router.message(AddCheck.CHANNELS)
+async def process_channel(message: Message, state: FSMContext):
+    channels = message.text.strip().split("\n")
+    channel_data = [(channel.strip(), channel.strip()) for channel in channels]
+
+    await state.update_data(channels=channel_data)
+    await message.answer("Теперь отправьте полный текст поста.")
     await state.set_state(AddCheck.POST_TEXT)
+    
     
 @router.message(AddCheck.POST_TEXT)
 async def get_post(message: Message, state: FSMContext):

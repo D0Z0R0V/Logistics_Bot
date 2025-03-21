@@ -1,7 +1,7 @@
 from datetime import datetime, time
 from telethon import TelegramClient
 from asyncpg import Connection
-from database.db_utils import get_connect, get_channel, get_post, update_status
+from bot.database.db_utils import get_connect, get_channel, get_post, update_status
 from config.config import API_HASH, API_ID
 
 import asyncio
@@ -18,7 +18,18 @@ async def check_posts():
             for channel_id, link in channels:
                 logging.info(f"Идет проверка канала{link}....")
                 try:
-                    pass
+                    async for message in client.iter_message(link, limit = 10):
+                        post_data = await get_post(conn, channel_id)
+                        if post_data:
+                            post_id, post_text, time_start, time_end, status = post_data
+                            currentt = datetime.now().time()
+                            
+                            if time_start <= currentt <= time_end:
+                                if post_text in message.text:
+                                    await update_status(conn, post_id, status)
+                                    logging.info(f"✅ Найден пост в {link}")
+                                else:
+                                    logging.info(f"❌ В {link} пост не найден")
                 except Exception as e:
                     logging.error(f"Ошибка при проверке {link}: {e}")
                     

@@ -1,4 +1,4 @@
-from config import DB_CONFIG
+from config.config import DB_CONFIG
 import asyncpg
 
 async def get_connect():
@@ -16,7 +16,10 @@ async def save_post(post_text: str, time_start: str, time_end: str, channels: li
     try:
         async with conn.transaction():
             for name, link in channels:
+                # Проверяем, существует ли уже канал с таким link
                 channel = await conn.fetchrow("SELECT id FROM channels WHERE link = $1", link)
+                
+                # Если канала нет, добавляем его и получаем сгенерированный id
                 if not channel:
                     channel_id = await conn.fetchval(
                         "INSERT INTO channels (names, link) VALUES ($1, $2) RETURNING id",
@@ -24,13 +27,17 @@ async def save_post(post_text: str, time_start: str, time_end: str, channels: li
                     )
                 else:
                     channel_id = channel["id"]
-                    
+
+                # Вставляем пост, связанный с id канала
                 await conn.execute(
                     "INSERT INTO posts (channels_id, post_text, time_start, time_end, status) VALUES ($1, $2, $3, $4, $5)",
                     channel_id, post_text, time_start, time_end, False
                 )
+    except Exception as e:
+        print(f"Ошибка при сохранении данных: {e}")
     finally:
         await conn.close()
+
         
 async def get_channel(conn):
     return await conn.fetch("SELECT id, link FROM channels")
