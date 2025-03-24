@@ -6,7 +6,7 @@ from aiogram.fsm.context import FSMContext
 
 from bot.database.db_utils import save_post
 from bot.handlers.monitor import monitoring
-import asyncio
+import asyncio, re
 
 
 router = Router()
@@ -21,28 +21,24 @@ class AddCheck(StatesGroup):
 async def get_posts(message: Message, state: FSMContext):
     await message.answer("Отправьте список каналов (каждый канал с новой строчки), где название - это ссылка на канал")
     await state.set_state(AddCheck.CHANNELS)
-'''
+    
 @router.message(AddCheck.CHANNELS)
 async def process_channel(message: Message, state: FSMContext):
     channels = message.text.strip().split("\n")
     channel_data = []
-    
-    for line in channels:
-        parts = line.split(" ")
-        if len(parts) < 2:
-            continue
-        name = " ".join(parts[:-1])
-        link = parts[-1]
-        channel_data.append((name, link))
-        
-    await state.update_data(channels=channel_data)
-    await message.answer("Теперь отправьте полный текст поста.")
-    await state.set_state(AddCheck.POST_TEXT)'''
-    
-@router.message(AddCheck.CHANNELS)
-async def process_channel(message: Message, state: FSMContext):
-    channels = message.text.strip().split("\n")
-    channel_data = [(channel.strip(), channel.strip()) for channel in channels]
+
+    for channel in channels:
+        # Регулярка для названия и ссылки
+        match = re.match(r"(.+?)\s*\((https?://t\.me/\S+)\)", channel.strip())
+        if match:
+            name, link = match.groups()
+            channel_data.append((name.strip(), link.strip()))
+        else:
+            await message.answer(f"⚠️ Некорректный формат строки: {channel}. Ожидается формат 'Название (ссылка)'.")
+
+    if not channel_data:
+        await message.answer("❌ Не удалось получить ни одного корректного канала. Попробуйте снова.")
+        return
 
     await state.update_data(channels=channel_data)
     await message.answer("Теперь отправьте полный текст поста.")
@@ -72,3 +68,23 @@ async def get_time(message: Message, state: FSMContext):
     
     await state.clear()
     
+    
+    
+    
+'''
+@router.message(AddCheck.CHANNELS)
+async def process_channel(message: Message, state: FSMContext):
+    channels = message.text.strip().split("\n")
+    channel_data = []
+    
+    for line in channels:
+        parts = line.split(" ")
+        if len(parts) < 2:
+            continue
+        name = " ".join(parts[:-1])
+        link = parts[-1]
+        channel_data.append((name, link))
+        
+    await state.update_data(channels=channel_data)
+    await message.answer("Теперь отправьте полный текст поста.")
+    await state.set_state(AddCheck.POST_TEXT)'''

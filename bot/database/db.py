@@ -2,21 +2,12 @@ from config.config import DB_CONFIG
 import asyncpg
 
 
+import aiosqlite
+
 async def init_db():
-    with open("bot/database/schema.sql") as f:
-        create_tables = f.read()
-        
-    conn = await asyncpg.connect(
-        user=DB_CONFIG["dbuser"],
-        password=DB_CONFIG["dbpassword"],
-        database=DB_CONFIG["dbname"],
-        host=DB_CONFIG["dbhost"],
-        port=DB_CONFIG["dbport"]
-    )
-    
-    try:
-        await conn.execute(create_tables)
-        print("База инициализирвоана.")
-        
-    finally:
-        await conn.close()
+    async with aiosqlite.connect("bot/database/database.db") as conn:
+        with open("bot/database/schema.sql", "r") as f:
+            create_tables = f.read()
+
+        await conn.executescript(create_tables)
+        print("База инициализирована.")

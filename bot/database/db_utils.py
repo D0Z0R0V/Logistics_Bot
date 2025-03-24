@@ -1,54 +1,90 @@
 from config.config import DB_CONFIG
 import asyncpg
-
+import aiosqlite, os
+    
 async def get_connect():
-    return await asyncpg.connect(
-        user=DB_CONFIG["dbuser"],
-        password=DB_CONFIG["dbpassword"],
-        database=DB_CONFIG["dbname"],
-        host=DB_CONFIG["dbhost"],
-        port=DB_CONFIG["dbport"]
-    )
+    try:
+        db_path = os.path.abspath('bot/database/database.db')
+        conn = await aiosqlite.connect(db_path)
+        conn.row_factory = aiosqlite.Row
+        return conn
+    except aiosqlite.Error as e:
+        print("An error occurred while connecting to the database:", e)
+        return None
     
 #Сохранить каналы и связать их с постом
 async def save_post(post_text: str, time_start: str, time_end: str, channels: list):
-    conn = await get_connect()
+    db_path = os.path.abspath('bot/database/database.db')
+    conn = await aiosqlite.connect(db_path)
     try:
-        async with conn.transaction():
-            for name, link in channels:
-                # Проверяем, существует ли уже канал с таким link
-                channel = await conn.fetchrow("SELECT id FROM channels WHERE link = $1", link)
-                
-                # Если канала нет, добавляем его и получаем сгенерированный id
-                if not channel:
-                    channel_id = await conn.fetchval(
-                        "INSERT INTO channels (names, link) VALUES ($1, $2) RETURNING id",
-                        name, link
-                    )
-                else:
-                    channel_id = channel["id"]
+        conn.row_factory = aiosqlite.Row
+        for name, link in channels:
+            cursor = await conn.execute("SELECT id FROM channels WHERE link = ?", (link,))
+            channel = await cursor.fetchone()
 
-                # Вставляем пост, связанный с id канала
-                await conn.execute(
-                    "INSERT INTO posts (channels_id, post_text, time_start, time_end, status) VALUES ($1, $2, $3, $4, $5)",
-                    channel_id, post_text, time_start, time_end, False
-                )
-    except Exception as e:
+            if not channel:
+                await conn.execute("INSERT INTO channels (names, link) VALUES (?, ?)", (name, link))
+                await conn.commit()
+                cursor = await conn.execute("SELECT id FROM channels WHERE link = ?", (link,))
+                channel = await cursor.fetchone()
+                print(f"✅ Новый канал добавлен: {name} (link: {link})")
+            else:
+                print(f"ℹ️ Канал уже существует: {name} (ID: {channel[0]})")
+
+            await conn.execute(
+                "INSERT INTO posts (channels_id, post_text, time_start, time_end, status) VALUES (?, ?, ?, ?, ?)",
+                (channel[0], post_text, time_start, time_end, 0)  # 0 = False
+            )
+            await conn.commit()
+            print(f"✅ Пост успешно сохранен для канала ID: {channel[0]}")
+
+    except aiosqlite.Error as e:
         print(f"Ошибка при сохранении данных: {e}")
+
     finally:
         await conn.close()
-
-        
+      
 async def get_channel(conn):
-    return await conn.fetch("SELECT id, link FROM channels")
+    try: 
+        cursor = await conn.execute("SELECT id, link FROM channels")
+        return await cursor.fetchall()
+    except Exception as e:
+        print(f"Ошибка при получении каналов: {e}")
 
 async def get_post(conn, channel_id):
-    return await conn.fetchrow(
-        "SELECT id, post_text, time_start, time_end FROM posts WHERE channels_id = $1 AND status = FALSE",
-        channel_id
-    )
+    try:
+        cursor = await conn.execute(
+            "SELECT id, post_text, time_start, time_end, status FROM posts WHERE channels_id = ? AND status = 0",
+            (channel_id,)
+        )
+        return await cursor.fetchone()
+    except Exception as e:
+        print(f"Ошибка при получении поста: {e}")
     
 async def update_status(conn, post_id, status):
-    return await conn.execute(
-        "UPDATE posts SET status = $1 AND WHERE = $2", status, post_id
-    )
+    try:
+        await conn.execute(
+            "UPDATE posts SET status = ? WHERE id = ?",
+            (status, post_id)
+        )
+        await conn.commit()
+    except Exception as e:
+        print(f"Ошибка при обновлении статуса: {e}")
+
+        
+async def clear_database(conn):
+    try:
+        await conn.execute("PRAGMA foreign_keys = OFF;")
+
+        await conn.execute("DELETE FROM posts;")
+        await conn.execute("DELETE FROM channels;")
+        
+        await conn.execute("DELETE FROM sqlite_sequence WHERE name='posts';")
+        await conn.execute("DELETE FROM sqlite_sequence WHERE name='channels';")
+
+        await conn.execute("PRAGMA foreign_keys = ON;")
+        await conn.commit()
+
+        print("База данных успешно очищена и сброшены счетчики ID.")
+    except Exception as e:
+        print(f"Ошибка при очистке базы данных: {e}")
