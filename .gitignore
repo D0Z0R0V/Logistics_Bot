@@ -3,3 +3,4 @@ env/
 *__pycache__
 monitoring.session
 *database.db
+*results*.csv
