@@ -1,6 +1,6 @@
 from aiogram import Router, F
 from aiogram.filters.command import Command
-from aiogram.types import Message
+from aiogram.types import Message, FSInputFile
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
 
@@ -67,7 +67,6 @@ async def get_time(message: Message, state: FSMContext):
     asyncio.create_task(monitoring())
     
     await state.clear()
-    
     
     
     

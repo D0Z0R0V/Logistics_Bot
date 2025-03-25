@@ -11,10 +11,12 @@ from bot.handlers import menu, postlist
 
 load_dotenv()
 
+
+bot = Bot(token = BOT_TOKEN)
+dp = Dispatcher(storage=MemoryStorage())
+
 async def main():
     logging.basicConfig(level = logging.INFO)
-    bot = Bot(token = BOT_TOKEN)
-    dp = Dispatcher(storage=MemoryStorage())
     
     dp.include_routers(
         menu.router,

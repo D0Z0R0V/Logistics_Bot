@@ -3,9 +3,9 @@ from telethon import TelegramClient
 from asyncpg import Connection
 from bot.database.db_utils import get_connect, get_channel, get_post, update_status
 from config.config import API_HASH, API_ID
+from logs.save import export_date
 
-import asyncio
-import logging
+import asyncio, logging, os
 
 SESSION_NAME = "monitoring"
 
@@ -53,6 +53,9 @@ async def monitoring():
 
         if current_time > monitoring_end_time:
             logging.info("⏳ Время проверки постов прошло, завершение мониторинга.")
+            conn = await get_connect()
+            await export_date(conn)
+            await conn.close()
             break
 
         try:
