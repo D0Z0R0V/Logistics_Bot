@@ -42,4 +42,8 @@ async def help_command(message: Message):
     
 @router.message(Command("file_check"))
 async def help_command(message: Message):
+    await message.answer("На данный момент отчет придет Вам автоматически после всех проверок)")
+    
+@router.message(Command("delete_check"))
+async def help_command(message: Message):
     await message.answer("Функционал в доработке")

@@ -7,6 +7,13 @@ from aiogram.types import FSInputFile
 async def export_date(conn, user_id, bot):
     try:
         cursor = await conn.execute("""
+            SELECT id FROM users WHERE userid = ?""",
+            (user_id,))
+        
+        data = await cursor.fetchone()
+        data_id = data['id']
+        
+        cursor = await conn.execute("""
             SELECT
                 c.link,
                 p.post_text,
@@ -18,7 +25,7 @@ async def export_date(conn, user_id, bot):
         result = await cursor.fetchall()
 
         os.makedirs("logs", exist_ok=True)
-        file_name = f"results_{user_id}.csv"
+        file_name = f"results_{data_id}.csv"
         file_path = os.path.abspath(f"logs/{file_name}")
 
         with open(file_path, "w", newline="") as file:

@@ -67,12 +67,20 @@ async def check_posts(user_id):
             await conn.close()
 
                     
-async def monitoring(user_id, bot):
+async def monitoring(user_id, bot, time_end):
+    if isinstance(time_end, str):
+        monitoring_end_time = datetime.strptime(time_end, "%H:%M").time()
+    elif isinstance(time_end, time):
+        monitoring_end_time = time_end
+    else:
+        raise ValueError("Некорректный формат времени окончания мониторинга")
+
+    logging.info(f"⏳ Мониторинг до {monitoring_end_time}")
     while True:
         current_time = datetime.now().time()
-        monitoring_end_time = time(19, 52)
+        #monitoring_end_time = time(10, 20)
 
-        if current_time > monitoring_end_time:
+        if current_time >= monitoring_end_time:
             logging.info("⏳ Время проверки постов прошло, завершение мониторинга.")
             conn = await get_connect()
             await export_date(conn, user_id, bot)
@@ -81,7 +89,7 @@ async def monitoring(user_id, bot):
 
         try:
             await check_posts(user_id)
-            logging.info("⏳ Ожидание следующей проверки (1 час)")
+            logging.info("⏳ Ожидание следующей проверки (30 минут)")
             await asyncio.sleep(60)
         except Exception as e:
             logging.error(f"Ошибка в мониторинге: {e}", exc_info=True)

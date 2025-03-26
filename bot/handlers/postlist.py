@@ -71,6 +71,6 @@ async def get_time(message: Message, state: FSMContext):
     )
 
     await message.answer("✅ Данные сохранены! Бот начнет мониторинг в указанное время.")
-    asyncio.create_task(monitoring(user_id=user_data["user_id"], bot=message.bot))
+    asyncio.create_task(monitoring(user_id=user_data["user_id"], bot=message.bot, time_end=time_end))
 
     await state.clear()
