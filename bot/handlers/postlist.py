@@ -32,7 +32,7 @@ async def process_channel(message: Message, state: FSMContext):
 
     #регулярка для каналов
     for link in channels:
-        if re.match(r"^https?://t\.me/[a-zA-Z0-9_]{5,}$", link.strip()):
+        if re.match(r"^https?://t\.me/(?:[a-zA-Z0-9_]{5,32}|\+[a-zA-Z0-9_-]+|c/\d+/[0-9]+|[a-zA-Z0-9_]{5,32}/[0-9]+)$", link.strip()):
             valid_channels.append(link.strip())
         else:
             await message.answer(f"⚠️ Некорректная ссылка: {link}. Ожидается формат https://t.me/название_канала")

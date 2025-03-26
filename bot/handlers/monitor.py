@@ -56,7 +56,7 @@ async def check_posts(user_id):
                                 similarity = fuzz.partial_ratio(clean_post_text, clean_message_text)
                                 logging.info(f"Сходство текста: {similarity}%")
 
-                                if similarity > 80:  # Порог схожести можно регулировать
+                                if similarity > 65:  # Порог схожести можно регулировать
                                     await update_status(conn, post_id, 1)
                                     logging.info(f"✅ Найден пост в {link} (сходство: {similarity}%)")
                                 else:
