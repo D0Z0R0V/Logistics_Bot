@@ -30,12 +30,21 @@ async def process_channel(message: Message, state: FSMContext):
     channels = message.text.strip().split("\n")
     valid_channels = []
 
-    #регулярка для каналов
+    # Регулярка для проверки ссылок
+    pattern = r"https?://(?:t\.me|telegram\.me)/(?:[a-zA-Z0-9_]{5,32}|\+[a-zA-Z0-9_-]+|c/\d+/[0-9]+|[a-zA-Z0-9_]{5,32}/\d+|\+[a-zA-Z0-9_-]+)"
+
     for link in channels:
-        if re.match(r"^https?://t\.me/(?:[a-zA-Z0-9_]{5,32}|\+[a-zA-Z0-9_-]+|c/\d+/[0-9]+|[a-zA-Z0-9_]{5,32}/[0-9]+)$", link.strip()):
-            valid_channels.append(link.strip())
+        link = link.strip()
+
+        if not re.match(pattern, link):
+            # Ищем ссылки внутри текста
+            match = re.findall(r"https?://(?:t\.me|telegram\.me)/(?:[a-zA-Z0-9_]{5,32}|\+[a-zA-Z0-9_-]+|c/\d+/[0-9]+|[a-zA-Z0-9_]{5,32}/\d+|\+[a-zA-Z0-9_-]+)", link)
+            if match:
+                valid_channels.extend(match)
+            else:
+                await message.answer(f"⚠️ Некорректная ссылка или формат текста: {link}. Ожидается формат https://t.me/название_канала")
         else:
-            await message.answer(f"⚠️ Некорректная ссылка: {link}. Ожидается формат https://t.me/название_канала")
+            valid_channels.append(link)
 
     if not valid_channels:
         await message.answer("❌ Не удалось получить ни одной корректной ссылки на канал. Попробуйте снова.")

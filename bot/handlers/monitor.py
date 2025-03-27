@@ -34,7 +34,7 @@ async def check_posts(user_id):
 
                 try:
                     channel_id = await get_channel_id(conn, link, user_id)
-                    async for message in client.iter_messages(link, limit=10):
+                    async for message in client.iter_messages(link, limit=15):
                         post_data = await get_post(conn, channel_id)
                         if post_data:
                             post_id, post_text, time_start, time_end, status = post_data
@@ -46,7 +46,13 @@ async def check_posts(user_id):
                                 time_end = datetime.strptime(time_end, "%H:%M").time()
 
                             if time_start <= current_time <= time_end:
-                                message_text = message.text if message.text else (message.caption if message.caption else "")
+                                # Проверяем, есть ли caption у сообщения, а то сбрасывало тут
+                                # message_text = message.text if message.text else (message.caption if message.caption else "") подумать
+                                if hasattr(message, 'caption'):
+                                    message_text = message.text or message.caption
+                                else:
+                                    message_text = message.text
+
                                 clean_post_text = clean_text(post_text)
                                 clean_message_text = clean_text(message_text)
 
