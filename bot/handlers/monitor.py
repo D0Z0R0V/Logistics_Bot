@@ -89,7 +89,7 @@ async def monitoring(user_id, bot, time_end):
         if current_time >= monitoring_end_time:
             logging.info("⏳ Время проверки постов прошло, завершение мониторинга.")
             conn = await get_connect()
-            await export_date(conn, user_id, bot)
+            await export_date(conn, user_id, bot, monitoring_end_time)
             await conn.close()
             break
 

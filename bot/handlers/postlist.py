@@ -27,31 +27,32 @@ async def get_posts(message: Message, state: FSMContext):
 
 @router.message(AddCheck.CHANNELS)
 async def process_channel(message: Message, state: FSMContext):
-    channels = message.text.strip().split("\n")
-    valid_channels = []
-
-    # Регулярка для проверки ссылок
+    valid_channels = set()
+    
+    # Регулярка для ссылок
     pattern = r"https?://(?:t\.me|telegram\.me)/(?:[a-zA-Z0-9_]{5,32}|\+[a-zA-Z0-9_-]+|c/\d+/[0-9]+|[a-zA-Z0-9_]{5,32}/\d+|\+[a-zA-Z0-9_-]+)"
 
-    for link in channels:
-        link = link.strip()
+    # 1️⃣ Обработка ссылок внутри текста (text_link)
+    if message.entities:
+        for entity in message.entities:
+            if entity.type == "text_link":  
+                valid_channels.add(entity.url)
 
-        if not re.match(pattern, link):
-            # Ищем ссылки внутри текста
-            match = re.findall(r"https?://(?:t\.me|telegram\.me)/(?:[a-zA-Z0-9_]{5,32}|\+[a-zA-Z0-9_-]+|c/\d+/[0-9]+|[a-zA-Z0-9_]{5,32}/\d+|\+[a-zA-Z0-9_-]+)", link)
-            if match:
-                valid_channels.extend(match)
-            else:
-                await message.answer(f"⚠️ Некорректная ссылка или формат текста: {link}. Ожидается формат https://t.me/название_канала")
+    # 2️⃣ Обработка явных ссылок в тексте
+    for line in message.text.split("\n"):
+        link = line.strip()
+        if re.match(pattern, link):
+            valid_channels.add(link)
         else:
-            valid_channels.append(link)
+            matches = re.findall(pattern, link)
+            valid_channels.update(matches)
 
     if not valid_channels:
         await message.answer("❌ Не удалось получить ни одной корректной ссылки на канал. Попробуйте снова.")
         return
 
-    await state.update_data(channels=valid_channels)
-    await message.answer("Теперь отправьте полный текст поста.")
+    await state.update_data(channels=list(valid_channels))
+    await message.answer("✅ Ссылки успешно обработаны. Теперь отправьте полный текст поста.")
     await state.set_state(AddCheck.POST_TEXT)
 
 @router.message(AddCheck.POST_TEXT)
